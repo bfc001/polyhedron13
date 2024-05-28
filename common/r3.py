@@ -42,6 +42,23 @@ class R3:
             self.z * other.x - self.x * other.z,
             self.x * other.y - self.y * other.x)
 
+    # Лежит ли точка строго вне куба единичного объема
+    # с центром в начале координат и рёбрами, параллельными координатным осям
+    def is_outside(self):
+        return (self.x > 0.5 or self.x < -0.5) or \
+            (self.y > 0.5 or self.y < -0.5) or \
+            (self.z > 0.5 or self.z < -0.5)
+
+    # Площадь проекции треугольника
+    @staticmethod
+    def t_area(a, b, c):
+        ab = R3(b.x - a.x, b.y - a.y, 0)
+        ac = R3(c.x - a.x, c.y - a.y, 0)
+        cross_product = ab.cross(ac)
+        area = 0.5 * ((cross_product.x ** 2 + cross_product.y ** 2 +
+                       cross_product.z ** 2) ** 0.5)
+        return area
+
 
 if __name__ == "__main__":  # pragma: no cover
     x = R3(1.0, 1.0, 1.0)

@@ -85,8 +85,9 @@ class Facet:
     """ Грань полиэдра """
     # Параметры конструктора: список вершин
 
-    def __init__(self, vertexes):
-        self.vertexes = vertexes
+    def __init__(self, vertexes, edges):
+        self.vertexes, self.edges = vertexes, edges
+        self._area = 0.0
 
     # «Вертикальна» ли грань?
     def is_vertical(self):
@@ -116,6 +117,41 @@ class Facet:
         return sum(self.vertexes, R3(0.0, 0.0, 0.0)) * \
             (1.0 / len(self.vertexes))
 
+    # Выполняются ли условия: все ребра грани являются
+    # полностью видимыми, и ее центр лежит
+    # строго вне куба единичного объема с центром в начале
+    # координат и рёбрами, параллельными координатным осям
+    def is_desired_facet(self):
+        center = self.center()
+        if center.is_outside():
+            n = 0
+            c = 0.0001
+            for e in self.edges:
+                if len(e.gaps) == 1 and (e.gaps[0].beg < c and abs(e.gaps[0].fin - 1.0) < c) \
+                        and e.gaps[0].fin - e.gaps[0].beg >= c:
+                    n += 1
+            if n == len(self.edges):
+                return True
+
+    # Площадь проекции подходящей грани
+    def area(self):
+        if self.is_desired_facet():
+            for i in range(len(self.vertexes) - 1):
+                self._area += abs(R3.t_area(self.vertexes[i],
+                                            self.vertexes[i + 1],
+                                            self.center()))
+            self._area += abs(R3.t_area(self.vertexes[0],
+                                        self.vertexes[len(self.vertexes) - 1],
+                                        self.center()))
+            return self._area
+        else:
+            return 0.0
+
+    # Сумма площадей проекций подходщих
+    # граней равна площади текущей грани
+    def sum_area(self):
+        return self.area()
+
 
 class Polyedr:
     """ Полиэдр """
@@ -127,6 +163,8 @@ class Polyedr:
 
         # списки вершин, рёбер и граней полиэдра
         self.vertexes, self.edges, self.facets = [], [], []
+        # изначально сумма площадей проекций подходящих граней равна нулю
+        self._sum_area = 0.0
 
         # список строк файла
         with open(file) as f:
@@ -154,10 +192,14 @@ class Polyedr:
                     # массив вершин этой грани
                     vertexes = list(self.vertexes[int(n) - 1] for n in buf)
                     # задание рёбер грани
+                    edges = []
                     for n in range(size):
-                        self.edges.append(Edge(vertexes[n - 1], vertexes[n]))
+                        tut = Edge(vertexes[n - 1], vertexes[n])
+                        self.edges.append(tut)
+                        edges.append(tut)
                     # задание самой грани
-                    self.facets.append(Facet(vertexes))
+                    self.facets.append(Facet(vertexes, edges))
+                    # добавляем к сумме площадей площадь проекции этой грани
 
     # Метод изображения полиэдра
     def draw(self, tk):  # pragma: no cover
@@ -165,5 +207,9 @@ class Polyedr:
         for e in self.edges:
             for f in self.facets:
                 e.shadow(f)
+                self._sum_area += f.area()
             for s in e.gaps:
                 tk.draw_line(e.r3(s.beg), e.r3(s.fin))
+
+    def sum_area(self):
+        return self._sum_area

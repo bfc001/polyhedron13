@@ -18,6 +18,11 @@ class Facet:
     def __init__(self, vertexes):
         self.vertexes = vertexes
 
+    # Центр грани
+    def center(self):
+        return sum(self.vertexes, R3(0.0, 0.0, 0.0)) * \
+            (1.0 / len(self.vertexes))
+
 
 class Polyedr:
     """ Полиэдр """

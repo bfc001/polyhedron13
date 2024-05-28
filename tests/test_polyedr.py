@@ -36,3 +36,6 @@ class TestPolyedr(unittest.TestCase):
 
     def test_num_edges(self):
         self.assertEqual(len(self.polyedr.edges), 16)
+
+    def test_sum_area01(self):
+        self.assertAlmostEqual(self.polyedr.sum_area(), 0.0)
